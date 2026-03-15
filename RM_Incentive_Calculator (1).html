@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RM Incentive Calculator</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0d0f12; color: #e2e8f0; }
+    .container { display: flex; width: 100%; height: 100vh; }
+    .sidebar { width: 260px; background: #141720; border-right: 1px solid #252a36; overflow-y: auto; padding: 16px 12px; }
+    .main { flex: 1; overflow-y: auto; padding: 16px 20px; }
+    .sidebar h2 { font-size: 12px; font-weight: 800; margin: 0 0 4px; }
+    .sidebar p { font-size: 9px; color: #6b7280; margin: 0; margin-bottom: 14px; }
+    .section { margin-bottom: 12px; border-top: 1px solid #252a36; padding-top: 12px; }
+    .section-title { font-size: 8px; font-weight: 700; color: #f59e0b; text-transform: uppercase; margin-bottom: 8px; }
+    .slider-group { margin-bottom: 10px; }
+    .slider-label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; font-size: 10px; color: #6b7280; }
+    .slider-value { font-size: 11px; font-family: monospace; color: #f59e0b; font-weight: 700; }
+    input[type="range"] { width: 100%; height: 3px; accent-color: #f59e0b; cursor: pointer; }
+    button { padding: 6px 8px; font-size: 10px; background: #0d0f12; border: 1px solid; cursor: pointer; border-radius: 4px; font-weight: 600; margin-bottom: 4px; transition: all 0.2s; width: 100%; }
+    button.struggle { color: #ef4444; border-color: rgba(239, 68, 68, 0.25); }
+    button.average { color: #f59e0b; border-color: rgba(245, 158, 11, 0.25); }
+    button.star { color: #10b981; border-color: rgba(16, 185, 129, 0.25); }
+    .profiles-btn { display: flex; flex-direction: column; gap: 4px; }
+    h1 { font-size: 14px; font-weight: 700; color: #f59e0b; margin: 0 0 8px; }
+    h2 { font-size: 12px; font-weight: 700; color: #f59e0b; margin: 0 0 8px; }
+    .card { background: #141720; border: 1px solid #252a36; border-radius: 8px; padding: 16px 14px; margin-bottom: 16px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .stat-box { text-align: center; }
+    .stat-box.total { background: #0d0f12; border-radius: 6px; padding: 8px 6px; }
+    .stat-value { font-size: 18px; font-weight: 800; font-family: monospace; }
+    .stat-label { font-size: 9px; color: #6b7280; margin-top: 2px; }
+    .pill { margin-bottom: 6px; }
+    .pill-label { display: flex; justify-content: space-between; margin-bottom: 2px; font-size: 10px; color: #94a3b8; }
+    .pill-bar { height: 3px; background: #252a36; border-radius: 1px; overflow: hidden; }
+    .pill-fill { height: 100%; border-radius: 1px; }
+    .comparison { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .comp-card { background: #141720; border-radius: 8px; padding: 12px; }
+    .comp-card-title { font-size: 10px; font-weight: 700; margin-bottom: 6px; }
+    .comp-card-value { font-size: 16px; font-weight: 800; font-family: monospace; margin-bottom: 4px; }
+    .comp-card-sub { font-size: 8px; color: #6b7280; }
+    .budget-card { background: #141720; border: 1.5px solid; border-radius: 8px; padding: 14px; }
+    .budget-title { font-size: 10px; color: #6b7280; margin-bottom: 3px; text-align: center; }
+    .budget-value { font-size: 28px; font-weight: 900; font-family: monospace; text-align: center; }
+    .budget-status { font-size: 9px; margin-top: 4px; text-align: center; font-weight: 600; }
+    .budget-bar { height: 8px; background: #252a36; border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
+    .budget-fill { height: 100%; border-radius: 4px; }
+    .budget-range { display: flex; justify-content: space-between; font-size: 8px; font-family: monospace; color: #6b7280; }
+    .footer { margin-top: 20px; text-align: center; font-size: 9px; color: #252a36; }
+    .first-section { border-top: none; padding-top: 0; margin-top: 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <h2>RM CALC</h2>
+      <p>Adjust to calculate</p>
+
+      <div class="section first-section">
+        <div class="section-title">Profiles</div>
+        <div class="profiles-btn">
+          <button class="struggle" onclick="loadProfile(0)">▼ Struggling</button>
+          <button class="average" onclick="loadProfile(1)">● Average</button>
+          <button class="star" onclick="loadProfile(2)">▲ Star</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">APE</div>
+        <div class="slider-group">
+          <div class="slider-label">
+            <span>APE (L)</span>
+            <span class="slider-value" id="apeVal">₹36.6</span>
+          </div>
+          <input type="range" min="5" max="120" step="0.5" value="36.6" id="ape" oninput="updateCalc()">
+        </div>
+        <div class="slider-group">
+          <div class="slider-label">
+            <span>Private %</span>
+            <span class="slider-value" id="privateVal">60%</span>
+          </div>
+          <input type="range" min="20" max="90" step="1" value="60" id="private" oninput="updateCalc()">
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Products</div>
+        <div class="slider-group">
+          <div class="slider-label">
+            <span>Car Comp</span>
+            <span class="slider-value" id="carCompVal">40%</span>
+          </div>
+          <input type="range" min="0" max="100" step="1" value="40" id="carComp" oninput="updateCalc()">
+        </div>
+        <div class="slider-group">
+          <div class="slider-label">
+            <span>Car Other</span>
+            <span class="slider-value" id="carOtherVal">30%</span>
+          </div>
+          <input type="range" min="0" max="100" step="1" value="30" id="carOther" oninput="updateCalc()">
+        </div>
+        <div class="slider-group">
+          <div class="slider-label">
+            <span>TW/CV</span>
+            <span class="slider-value" id="twCvVal">30%</span>
+          </div>
+          <input type="range" min="0" max="100" step="1" value="30" id="twCv" oninput="updateCalc()">
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Agents</div>
+        <div class="slider-group">
+          <div class="slider-label">
+            <span>Active</span>
+            <span class="slider-value" id="activeVal">12</span>
+          </div>
+          <input type="range" min="0" max="40" step="1" value="12" id="active" oninput="updateCalc()">
+        </div>
+        <div class="slider-group">
+          <div class="slider-label">
+            <span>Connected</span>
+            <span class="slider-value" id="connectedVal">25</span>
+          </div>
+          <input type="range" min="0" max="60" step="1" value="25" id="connected" oninput="updateCalc()">
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Renewal</div>
+        <div class="slider-group">
+          <div class="slider-label">
+            <span>Renewal %</span>
+            <span class="slider-value" id="renewalVal">63%</span>
+          </div>
+          <input type="range" min="30" max="95" step="1" value="63" id="renewal" oninput="updateCalc()">
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main">
+      <h1>Your Monthly Incentive</h1>
+      <div class="card">
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="stat-value" style="color: #f87171;" id="pillarAVal">₹0</div>
+            <div class="stat-label">Pillar A</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" style="color: #60a5fa;" id="pillarBVal">₹0</div>
+            <div class="stat-label">Pillar B</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" style="color: #34d399;" id="pillarCVal">₹0</div>
+            <div class="stat-label">Pillar C</div>
+          </div>
+          <div class="stat-box total">
+            <div style="font-size: 9px; color: #6b7280; margin-bottom: 2px;">TOTAL</div>
+            <div class="stat-value" style="color: #f59e0b; font-size: 18px;" id="totalVal">₹0</div>
+          </div>
+        </div>
+      </div>
+
+      <h2>Breakdown</h2>
+      <div class="card">
+        <div class="pill">
+          <div class="pill-label">
+            <span>Pillar A — APE Commission</span>
+            <span id="pillANum" style="color: #f87171;">₹0</span>
+          </div>
+          <div class="pill-bar"><div class="pill-fill" style="background: #f87171; width: 0%;" id="pillABar"></div></div>
+        </div>
+        <div class="pill">
+          <div class="pill-label">
+            <span>Pillar B — Activity Bonus</span>
+            <span id="pillBNum" style="color: #60a5fa;">₹0</span>
+          </div>
+          <div class="pill-bar"><div class="pill-fill" style="background: #60a5fa; width: 0%;" id="pillBBar"></div></div>
+        </div>
+        <div class="pill">
+          <div class="pill-label">
+            <span>Pillar C — Renewal Bonus</span>
+            <span id="pillCNum" style="color: #34d399;">₹0</span>
+          </div>
+          <div class="pill-bar"><div class="pill-fill" style="background: #34d399; width: 0%;" id="pillCBar"></div></div>
+        </div>
+      </div>
+
+      <h2>Comparison</h2>
+      <div class="comparison">
+        <div class="comp-card" style="border: 1px solid rgba(239, 68, 68, 0.3);">
+          <div class="comp-card-title" style="color: #ef4444;">▼ Struggling RM</div>
+          <div class="comp-card-value" style="color: #ef4444;" id="compA">₹0</div>
+          <div class="comp-card-sub">APE 15L • 5 active</div>
+        </div>
+        <div class="comp-card" style="border: 1px solid rgba(245, 158, 11, 0.3);">
+          <div class="comp-card-title" style="color: #f59e0b;">● Average RM</div>
+          <div class="comp-card-value" style="color: #f59e0b;" id="compB">₹0</div>
+          <div class="comp-card-sub">APE 36.6L • 12 active</div>
+        </div>
+        <div class="comp-card" style="border: 1px solid rgba(16, 185, 129, 0.3);">
+          <div class="comp-card-title" style="color: #10b981;">▲ Star RM</div>
+          <div class="comp-card-value" style="color: #10b981;" id="compC">₹0</div>
+          <div class="comp-card-sub">APE 80L • 22 active</div>
+        </div>
+      </div>
+
+      <h2 style="margin-top: 16px;">Budget (153 RMs)</h2>
+      <div class="budget-card" id="budgetCard">
+        <div class="budget-title">Floor Disbursement</div>
+        <div class="budget-value" style="color: #10b981;" id="budgetVal">₹0L</div>
+        <div class="budget-status" style="color: #10b981;" id="budgetStatus">✓ Under budget</div>
+        <div class="budget-bar"><div class="budget-fill" style="background: #10b981; width: 0%;" id="budgetBar"></div></div>
+        <div class="budget-range">
+          <span>₹0</span>
+          <span style="color: #f59e0b;">₹17L</span>
+          <span style="color: #10b981;">₹18.7L</span>
+        </div>
+      </div>
+
+      <div class="footer">RM Incentive Calculator • MAR 2026</div>
+    </div>
+  </div>
+
+  <script>
+    const PROFILES = [
+      { apeLacs: 15, privatePct: 40, carComp: 20, carOther: 40, twCv: 40, activeAgents: 5, connectedAgents: 10, renewalPct: 42 },
+      { apeLacs: 36.6, privatePct: 60, carComp: 40, carOther: 30, twCv: 30, activeAgents: 12, connectedAgents: 25, renewalPct: 63 },
+      { apeLacs: 80, privatePct: 75, carComp: 60, carOther: 25, twCv: 15, activeAgents: 22, connectedAgents: 45, renewalPct: 83 }
+    ];
+
+    const RATES = { rateA: 0.12, rateActive: 150, rateConn: 40, renewalSlabs: [0, 800, 1500, 2500] };
+
+    function calcPillarA(apeLacs, privatePct, carComp, carOther, twCv) {
+      const privateApe = apeLacs * (privatePct / 100);
+      const psuApe = apeLacs * (1 - privatePct / 100);
+      const insurerWeighted = privateApe * 1.3 + psuApe * 1.0;
+      const booster = (carComp / 100) * 1.8 + (carOther / 100) * 1.3 + (twCv / 100) * 1.0;
+      return (RATES.rateA / 100) * insurerWeighted * booster * 100000;
+    }
+
+    function calcPillarB(activeAgents, connectedAgents) {
+      return activeAgents * RATES.rateActive + connectedAgents * RATES.rateConn;
+    }
+
+    function calcPillarC(renewalPct) {
+      if (renewalPct < 50) return RATES.renewalSlabs[0];
+      if (renewalPct < 65) return RATES.renewalSlabs[1];
+      if (renewalPct < 80) return RATES.renewalSlabs[2];
+      return RATES.renewalSlabs[3];
+    }
+
+    function loadProfile(i) {
+      const p = PROFILES[i];
+      document.getElementById('ape').value = p.apeLacs;
+      document.getElementById('private').value = p.privatePct;
+      document.getElementById('carComp').value = p.carComp;
+      document.getElementById('carOther').value = p.carOther;
+      document.getElementById('twCv').value = p.twCv;
+      document.getElementById('active').value = p.activeAgents;
+      document.getElementById('connected').value = p.connectedAgents;
+      document.getElementById('renewal').value = p.renewalPct;
+      updateCalc();
+    }
+
+    function updateCalc() {
+      const ape = parseFloat(document.getElementById('ape').value);
+      const privatePct = parseFloat(document.getElementById('private').value);
+      const carComp = parseFloat(document.getElementById('carComp').value);
+      const carOther = parseFloat(document.getElementById('carOther').value);
+      const twCv = parseFloat(document.getElementById('twCv').value);
+      const activeAgents = parseFloat(document.getElementById('active').value);
+      const connectedAgents = parseFloat(document.getElementById('connected').value);
+      const renewalPct = parseFloat(document.getElementById('renewal').value);
+
+      document.getElementById('apeVal').textContent = '₹' + ape.toFixed(1);
+      document.getElementById('privateVal').textContent = privatePct + '%';
+      document.getElementById('carCompVal').textContent = carComp + '%';
+      document.getElementById('carOtherVal').textContent = carOther + '%';
+      document.getElementById('twCvVal').textContent = twCv + '%';
+      document.getElementById('activeVal').textContent = activeAgents;
+      document.getElementById('connectedVal').textContent = connectedAgents;
+      document.getElementById('renewalVal').textContent = renewalPct + '%';
+
+      const a = calcPillarA(ape, privatePct, carComp, carOther, twCv);
+      const b = calcPillarB(activeAgents, connectedAgents);
+      const c = calcPillarC(renewalPct);
+      const total = a + b + c;
+
+      document.getElementById('pillarAVal').textContent = '₹' + Math.round(a).toLocaleString();
+      document.getElementById('pillarBVal').textContent = '₹' + Math.round(b).toLocaleString();
+      document.getElementById('pillarCVal').textContent = '₹' + Math.round(c).toLocaleString();
+      document.getElementById('totalVal').textContent = '₹' + Math.round(total).toLocaleString();
+
+      const pctA = (a / total) * 100;
+      const pctB = (b / total) * 100;
+      const pctC = (c / total) * 100;
+
+      document.getElementById('pillANum').textContent = '₹' + Math.round(a).toLocaleString();
+      document.getElementById('pillBNum').textContent = '₹' + Math.round(b).toLocaleString();
+      document.getElementById('pillCNum').textContent = '₹' + Math.round(c).toLocaleString();
+
+      document.getElementById('pillABar').style.width = Math.min(100, pctA) + '%';
+      document.getElementById('pillBBar').style.width = Math.min(100, pctB) + '%';
+      document.getElementById('pillCBar').style.width = Math.min(100, pctC) + '%';
+
+      PROFILES.forEach((p, i) => {
+        const pA = calcPillarA(p.apeLacs, p.privatePct, p.carComp, p.carOther, p.twCv);
+        const pB = calcPillarB(p.activeAgents, p.connectedAgents);
+        const pC = calcPillarC(p.renewalPct);
+        const pTotal = pA + pB + pC;
+        const ids = ['compA', 'compB', 'compC'];
+        document.getElementById(ids[i]).textContent = '₹' + Math.round(pTotal).toLocaleString();
+      });
+
+      const scale = [0.15, 0.60, 0.25];
+      let budgetTotal = 0;
+      PROFILES.forEach((p, i) => {
+        const pA = calcPillarA(p.apeLacs, p.privatePct, p.carComp, p.carOther, p.twCv);
+        const pB = calcPillarB(p.activeAgents, p.connectedAgents);
+        const pC = calcPillarC(p.renewalPct);
+        budgetTotal += (pA + pB + pC) * scale[i] * 153;
+      });
+
+      const budgetL = budgetTotal / 100000;
+      let budgetColor = '#10b981';
+      let budgetMsg = '✓ Under budget';
+      if (budgetTotal > 1700000) {
+        budgetColor = budgetTotal > 1870000 ? '#ef4444' : '#f59e0b';
+        budgetMsg = budgetTotal > 1870000 ? '✗ Over cap' : '✓ Within 10%';
+      }
+      document.getElementById('budgetVal').textContent = '₹' + budgetL.toFixed(1) + 'L';
+      document.getElementById('budgetStatus').textContent = budgetMsg;
+      document.getElementById('budgetStatus').style.color = budgetColor;
+      document.getElementById('budgetCard').style.borderColor = budgetColor + '66';
+      document.getElementById('budgetBar').style.background = budgetColor;
+      document.getElementById('budgetBar').style.width = Math.min(110, (budgetTotal / 1700000) * 100) + '%';
+    }
+
+    updateCalc();
+  </script>
+</body>
+</html>
